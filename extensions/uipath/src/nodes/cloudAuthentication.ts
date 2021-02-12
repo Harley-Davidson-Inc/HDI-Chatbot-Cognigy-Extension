@@ -5,8 +5,6 @@ const Orchestrator = require('uipath-orchestrator');
 export interface ICloudAuthenticationParams extends INodeFunctionBaseParams {
 	config: {
 		instanceInfo: {
-			accountLogicalName: string;
-			tenantLogicalName: string;
 			tenancyName: string;
 			usernameOrEmailAddress: string;
 			password: string;
@@ -18,10 +16,7 @@ export interface ICloudAuthenticationParams extends INodeFunctionBaseParams {
 			clientId: string;
 			refreshToken: string;
 		};
-		accessToken: string;
-        releaseKey: string;
-        robotIds: {ids: string []};
-        storeLocation: string;
+	    storeLocation: string;
 		inputKey: string;
 		contextKey: string;
 	};
@@ -101,8 +96,8 @@ export const cloudAuthenticationNode = createNodeDescriptor({
 	},
 	function: async ({ cognigy, config }: ICloudAuthenticationParams) => {
 		const { api } = cognigy;
-		const { instanceInfo, accessToken, releaseKey, robotIds, storeLocation, inputKey, contextKey } = config;
-		const { accountLogicalName, tenantLogicalName, tenancyName, usernameOrEmailAddress, password, hostname, isSecure, port, invalidCertificate, connectionPool } = instanceInfo;
+		const { instanceInfo, storeLocation, inputKey, contextKey } = config;
+		const { tenancyName, usernameOrEmailAddress, password, hostname, isSecure, port, invalidCertificate, connectionPool } = instanceInfo;
 
 		const orchestrator = new Orchestrator({
 			tenancyName,

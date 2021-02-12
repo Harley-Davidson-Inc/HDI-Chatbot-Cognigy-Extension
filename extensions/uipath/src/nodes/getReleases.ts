@@ -4,8 +4,6 @@ const Orchestrator = require('uipath-orchestrator');
 export interface IGetReleasesParams extends INodeFunctionBaseParams {
 	config: {
 		instanceInfo: {
-			accountLogicalName: string;
-			tenantLogicalName: string;
 			tenancyName: string;
 			usernameOrEmailAddress: string;
 			password: string;
@@ -16,9 +14,7 @@ export interface IGetReleasesParams extends INodeFunctionBaseParams {
             connectionPool: number;
 		};
 		accessToken: string;
-        releaseKey: string;
-        robotIds: {ids: string []};
-        storeLocation: string;
+		storeLocation: string;
 		inputKey: string;
 		contextKey: string;
 	};
@@ -107,8 +103,8 @@ export const getReleasesNode = createNodeDescriptor({
 	},
 	function: async ({ cognigy, config }: IGetReleasesParams) => {
 		const { api } = cognigy;
-		const { instanceInfo, accessToken, storeLocation, inputKey, contextKey } = config;
-		const { accountLogicalName, tenantLogicalName, tenancyName, usernameOrEmailAddress, password, hostname, isSecure, port, invalidCertificate, connectionPool } = instanceInfo;
+		const { accessToken, instanceInfo, storeLocation, inputKey, contextKey } = config;
+		const { tenancyName, usernameOrEmailAddress, password, hostname, isSecure, port, invalidCertificate, connectionPool } = instanceInfo;
 
 		const orchestrator = new Orchestrator({
 			tenancyName,

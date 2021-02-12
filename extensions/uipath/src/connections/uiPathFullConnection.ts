@@ -24,8 +24,6 @@ export const uiPathFullConnection: IConnectionSchema = {
         { fieldName: "isSecure"},
         { fieldName: "port" },
         { fieldName: "invalidCertificate"},
-        { fieldName: "connectionPool"},
-        { fieldName: "accountLogicalName"},
-        { fieldName: "tenantLogicalName"}
+        { fieldName: "connectionPool"}
 	]
 };
