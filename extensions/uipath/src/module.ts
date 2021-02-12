@@ -5,9 +5,10 @@ import { uiPathInstanceData } from './connections/uiPathInstance';
 import { addTransaction } from './nodes/addTransaction';
 import { cloudAuthenticationNode } from './nodes/cloudAuthentication';
 import { startJobNode } from './nodes/startJob';
-import { getOutputInformationSynch } from './nodes/getOutputInformationSynch';
+// import { getOutputInformationSynch } from './nodes/getOutputInformationSynch';
 import { getReleasesNode } from "./nodes/getReleases";
 import { onPremAuthenticationNode } from "./nodes/onpremAuthentication";
+import { uiPathFullConnection } from "./connections/uiPathFullConnection";
 
 export default createExtension({
 	nodes: [
@@ -15,7 +16,7 @@ export default createExtension({
 		onPremAuthenticationNode,
 		addTransaction,
 		startJobNode,
-		getOutputInformationSynch,
+		// getOutputInformationSynch,
 		getReleasesNode
 	],
 
@@ -23,5 +24,6 @@ export default createExtension({
 		uiPathAccessData,
 		uiPathOnPremAccessData,
 		uiPathInstanceData,
+		uiPathFullConnection
 	]
 });

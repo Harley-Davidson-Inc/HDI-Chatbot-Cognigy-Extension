@@ -1,14 +1,24 @@
 import { createNodeDescriptor, INodeFunctionBaseParams } from "@cognigy/extension-tools";
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+const Orchestrator = require('uipath-orchestrator');
 
 export interface IGetReleasesParams extends INodeFunctionBaseParams {
 	config: {
 		instanceInfo: {
 			accountLogicalName: string;
 			tenantLogicalName: string;
+			tenancyName: string;
+			usernameOrEmailAddress: string;
+			password: string;
+			hostname: string;
+			isSecure: boolean;
+			port: 443 | 587,
+			invalidCertificate: boolean;
+            connectionPool: number;
 		};
 		accessToken: string;
-		storeLocation: string;
+        releaseKey: string;
+        robotIds: {ids: string []};
+        storeLocation: string;
 		inputKey: string;
 		contextKey: string;
 	};
@@ -23,7 +33,7 @@ export const getReleasesNode = createNodeDescriptor({
 			label: "Orchestrator Instance Information",
 			type: "connection",
 			params: {
-				connectionType: 'instanceData',
+				connectionType: "uipathFullConnection",
 				required: true
 			}
 		},
@@ -98,22 +108,26 @@ export const getReleasesNode = createNodeDescriptor({
 	function: async ({ cognigy, config }: IGetReleasesParams) => {
 		const { api } = cognigy;
 		const { instanceInfo, accessToken, storeLocation, inputKey, contextKey } = config;
-		const { accountLogicalName, tenantLogicalName } = instanceInfo;
+		const { accountLogicalName, tenantLogicalName, tenancyName, usernameOrEmailAddress, password, hostname, isSecure, port, invalidCertificate, connectionPool } = instanceInfo;
 
-		const endpoint = `https://platform.uipath.com/${accountLogicalName}/${tenantLogicalName}/odata/Releases`;
-		const axiosConfig: AxiosRequestConfig = {
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${accessToken}`,
-				'X-UIPATH-TenantName': tenantLogicalName
-			}
-		};
+		const orchestrator = new Orchestrator({
+			tenancyName,
+			usernameOrEmailAddress,
+			password,
+			hostname,
+			isSecure,
+			port,
+			invalidCertificate,
+			connectionPool
+	   });
+
+
+
 
 		try {
-			const result: AxiosResponse = await axios.get(endpoint, axiosConfig);
-
+			const response = await orchestrator.post('/odata/Releases');
 			if (storeLocation === 'context') {
-				api.addToContext(contextKey, result.data, 'simple');
+				api.addToContext(contextKey, response, 'simple');
 			} else {
 				// @ts-ignore
 				api.addToInput(inputKey, result.data);

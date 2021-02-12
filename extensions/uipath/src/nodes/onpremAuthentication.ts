@@ -1,15 +1,25 @@
 import { createNodeDescriptor, INodeFunctionBaseParams } from "@cognigy/extension-tools";
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { AccessToken } from "../../types/uipath";
+const Orchestrator = require('uipath-orchestrator');
+
 
 export interface IOnPremAuthenticationParams extends INodeFunctionBaseParams {
     config: {
-        connection: {
+        instanceInfo: {
             orchestratorUrl: string;
-            tenancyName: string;
-            usernameOrEmailAddress: string;
-            password: string;
+            accountLogicalName: string;
+			tenantLogicalName: string;
+			tenancyName: string;
+			usernameOrEmailAddress: string;
+			password: string;
+			hostname: string;
+			isSecure: boolean;
+			port: 443 | 587,
+			invalidCertificate: boolean;
+            connectionPool: number;
         };
+        accessToken: string;
+        releaseKey: string;
+        robotIds: {ids: string []};
         storeLocation: string;
         inputKey: string;
         contextKey: string;
@@ -25,7 +35,7 @@ export const onPremAuthenticationNode = createNodeDescriptor({
             label: "UiPath On-Prem Connection",
             type: "connection",
             params: {
-                connectionType: "onPremAuth",
+                connectionType: "uipathFullConnection",
                 required: true
             }
         },
@@ -90,28 +100,41 @@ export const onPremAuthenticationNode = createNodeDescriptor({
     },
     function: async ({ cognigy, config }: IOnPremAuthenticationParams) => {
         const { api } = cognigy;
-        const { connection, storeLocation, inputKey, contextKey } = config;
-        const { tenancyName, orchestratorUrl, password, usernameOrEmailAddress } = connection;
+        const { instanceInfo, accessToken, releaseKey, robotIds, storeLocation, inputKey, contextKey } = config;
+		const { orchestratorUrl, accountLogicalName, tenantLogicalName, tenancyName, usernameOrEmailAddress, password, hostname, isSecure, port, invalidCertificate, connectionPool } = instanceInfo;
 
-        const endpoint = `https://${orchestratorUrl}/api/account/authenticate`;
-        const axiosConfig: AxiosRequestConfig = {
-            "headers":
-            {
-                "Content-Type": "application/json"
-            }
-        };
+        const orchestrator = new Orchestrator({
+            tenancyName,
+			usernameOrEmailAddress,
+			password,
+			hostname,
+			isSecure,
+			port,
+			invalidCertificate,
+			connectionPool
+       });
+
+
+
+
+        // const endpoint = `https://${orchestratorUrl}/api/account/authenticate`;
+        // const axiosConfig: AxiosRequestConfig = {
+        //     "headers":
+        //     {
+        //         "Content-Type": "application/json"
+        //     }
+        // };
+
+
         try {
-            const response: AxiosResponse<AccessToken> = await axios.post(endpoint, {
-                tenancyName,
-                usernameOrEmailAddress,
-                password
-            }, axiosConfig);
-            if (storeLocation === 'context') {
-                api.addToContext(contextKey, response.data.access_token, 'simple');
-            } else {
-                // @ts-ignore
-                api.addToInput(inputKey, response.data.access_token);
-            }
+            const response = await orchestrator.post(`https://${orchestratorUrl}/api/account/authenticate`);
+
+			if (storeLocation === 'context') {
+				api.addToContext(contextKey, response, 'simple');
+			} else {
+				// @ts-ignore
+				api.addToInput(inputKey, response);
+			}
         } catch (error) {
             if (storeLocation === 'context') {
                 api.addToContext(contextKey, { error: error.message }, 'simple');

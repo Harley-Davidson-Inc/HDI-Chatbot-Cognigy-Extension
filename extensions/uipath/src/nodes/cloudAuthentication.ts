@@ -1,13 +1,26 @@
 import { createNodeDescriptor, INodeFunctionBaseParams } from "@cognigy/extension-tools";
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { AccessToken } from "../../types/uipath";
+const Orchestrator = require('uipath-orchestrator');
 
 export interface ICloudAuthenticationParams extends INodeFunctionBaseParams {
 	config: {
-		accessInfo: {
+		instanceInfo: {
+			accountLogicalName: string;
+			tenantLogicalName: string;
+			tenancyName: string;
+			usernameOrEmailAddress: string;
+			password: string;
+			hostname: string;
+			isSecure: boolean;
+			port: 443 | 587,
+			invalidCertificate: boolean;
+            connectionPool: number;
 			clientId: string;
 			refreshToken: string;
-        };
+		};
+		accessToken: string;
+        releaseKey: string;
+        robotIds: {ids: string []};
         storeLocation: string;
 		inputKey: string;
 		contextKey: string;
@@ -23,7 +36,7 @@ export const cloudAuthenticationNode = createNodeDescriptor({
 			label: "UiPath Connection",
 			type: "connection",
 			params: {
-				connectionType: "accessData",
+				connectionType: "uipathFullConnection",
 				required: true
 			}
 		},
@@ -87,37 +100,40 @@ export const cloudAuthenticationNode = createNodeDescriptor({
 		color: "#fa4514"
 	},
 	function: async ({ cognigy, config }: ICloudAuthenticationParams) => {
-        const { api } = cognigy;
-		const { accessInfo, storeLocation, inputKey, contextKey } = config;
-		const { clientId, refreshToken } = accessInfo;
+		const { api } = cognigy;
+		const { instanceInfo, accessToken, releaseKey, robotIds, storeLocation, inputKey, contextKey } = config;
+		const { accountLogicalName, tenantLogicalName, tenancyName, usernameOrEmailAddress, password, hostname, isSecure, port, invalidCertificate, connectionPool } = instanceInfo;
 
-        const endpoint = 'https://account.uipath.com/oauth/token';
-        const axiosConfig: AxiosRequestConfig = {
-													"headers":
-														{
-															"Content-Type" : "application/json"
-														}
-												};
+		const orchestrator = new Orchestrator({
+			tenancyName,
+			usernameOrEmailAddress,
+			password,
+			hostname,
+			isSecure,
+			port,
+			invalidCertificate,
+			connectionPool
+	   });
 
-        const data = {
-            'grant_type': "refresh_token",
-            'client_id': clientId,
-            'refresh_token': refreshToken
-        };
 		try {
-			const response: AxiosResponse <AccessToken> = await axios.post(endpoint, data, axiosConfig);
+			const response = await orchestrator.post('https://account.uipath.com/oauth/token');
+			// , {
+				// 'grant_type': "refresh_token",
+				// 'client_id': clientId,
+				// 'refresh_token': refreshToken
+			// 	});
 			if (storeLocation === 'context') {
-				api.addToContext(contextKey, response.data.access_token , 'simple');
+				api.addToContext(contextKey, response, 'simple');
 			} else {
 				// @ts-ignore
-				api.addToInput(inputKey, response.data.access_token);
+				api.addToInput(inputKey, response);
 			}
-		} catch (error) {
-			if (storeLocation === 'context') {
-				api.addToContext(contextKey, { error: error.message }, 'simple');
-			} else {
-				// @ts-ignore
-				api.addToInput(inputKey, { error: error.message });
+        } catch (error) {
+            if (storeLocation === 'context') {
+                api.addToContext(contextKey, { error: error.message }, 'simple');
+            } else {
+                // @ts-ignore
+                api.addToInput(inputKey, { error: error.message });
 			}
 		}
 	}
